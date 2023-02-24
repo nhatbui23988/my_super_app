@@ -1,0 +1,38 @@
+name: my_super_app
+
+packages:
+  - cores/**
+  - "*"
+
+scripts:
+  hello:
+    name: hey
+    description: Greet the world
+    run: echo '$GREETING World'
+    env:
+      GREETING: 'Hey'
+
+  cleanall:
+    description: Clean app, domain & data
+    run: melos exec "flutter clean"
+
+  getall:
+    description: pub get app, domain & data
+    run: melos exec "flutter pub get"
+
+  helloAgain:
+    run: echo 'Hello $(dirname $PWD)'
+    # bao nhiêu lệnh run đồng thời
+    exec:
+      concurrency: 1
+
+  hello_flutter:
+    exec: echo 'Hello $(dirname $PWD)'
+    packageFilters:
+      flutter: true
+
+command:
+  bootstrap:
+    hooks:
+      pre: echo `bootstrap command is running...`
+      post: echo `bootstrap command is done`

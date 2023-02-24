@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:my_super_app/src/presentations/screens/home_page.dart';
+import 'package:my_super_app/src/app/module/provider_module.dart';
+import 'package:my_super_app/src/presentations/screens/home/home_screen.dart';
+import 'package:my_super_app/src/presentations/screens/splash/splash_screen.dart';
 import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await ProviderModule.init();
 
   runApp(const MyApp());
 }
@@ -23,7 +27,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(),
+      home: const SplashScreen(),
     );
   }
 }
