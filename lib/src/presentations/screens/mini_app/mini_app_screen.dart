@@ -24,16 +24,103 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 // #enddocregion platform_imports
 
 class MiniAppScreen extends StatefulWidget {
-  const MiniAppScreen({Key? key}) : super(key: key);
+  const MiniAppScreen({Key? key, required this.appUrl}) : super(key: key);
+  final String appUrl;
 
   @override
   State<MiniAppScreen> createState() => _MiniAppScreenState();
 }
 
 class _MiniAppScreenState extends State<MiniAppScreen> {
+  late final WebViewController _controller;
+  String get _appUrl => widget.appUrl;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // #docregion platform_features
+    late final PlatformWebViewControllerCreationParams params;
+    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
+      params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+
+    final WebViewController controller =
+    WebViewController.fromPlatformCreationParams(params);
+    // #enddocregion platform_features
+
+    controller
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            debugPrint('WebView is loading (progress : $progress%)');
+          },
+          onPageStarted: (String url) {
+            debugPrint('Page started loading: $url');
+          },
+          onPageFinished: (String url) {
+            debugPrint('Page finished loading: $url');
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint('''
+Page resource error:
+  code: ${error.errorCode}
+  description: ${error.description}
+  errorType: ${error.errorType}
+  isForMainFrame: ${error.isForMainFrame}
+          ''');
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            if (request.url.startsWith('https://www.youtube.com/')) {
+              debugPrint('blocking navigation to ${request.url}');
+              return NavigationDecision.prevent;
+            }
+            debugPrint('allowing navigation to ${request.url}');
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..addJavaScriptChannel(
+        'Toaster',
+        onMessageReceived: (JavaScriptMessage message) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message.message)),
+          );
+        },
+      )
+      ..loadRequest(Uri.parse(_appUrl));
+    print("appUrl : $_appUrl");
+
+    // #docregion platform_features
+    if (controller.platform is AndroidWebViewController) {
+      AndroidWebViewController.enableDebugging(true);
+      (controller.platform as AndroidWebViewController)
+          .setMediaPlaybackRequiresUserGesture(false);
+    }
+    // #enddocregion platform_features
+
+    _controller = controller;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Column(children: [Text("Second screen")],)),);
+    return Scaffold(
+    //   appBar: AppBar(
+    //   title: const Text('Flutter WebView example'),
+    //   // This drop down menu demonstrates that Flutter widgets can be shown over the web view.
+    //   actions: <Widget>[
+    //     NavigationControls(webViewController: _controller),
+    //     SampleMenu(webViewController: _controller),
+    //   ],
+    // ),
+      body: SafeArea(child: WebViewWidget(controller: _controller)),);
   }
 }
 
@@ -178,14 +265,14 @@ Page resource error:
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Flutter WebView example'),
-      //   // This drop down menu demonstrates that Flutter widgets can be shown over the web view.
-      //   actions: <Widget>[
-      //     NavigationControls(webViewController: _controller),
-      //     SampleMenu(webViewController: _controller),
-      //   ],
-      // ),
+      appBar: AppBar(
+        title: const Text('Flutter WebView example'),
+        // This drop down menu demonstrates that Flutter widgets can be shown over the web view.
+        actions: <Widget>[
+          NavigationControls(webViewController: _controller),
+          SampleMenu(webViewController: _controller),
+        ],
+      ),
       body: SafeArea(child: WebViewWidget(controller: _controller)),
       // floatingActionButton: favoriteButton(),
     );

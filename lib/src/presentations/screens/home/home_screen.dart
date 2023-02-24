@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openMiniApp(BuildContext context, String appUrl){
     Navigator.push(context, PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => const MiniAppScreen(),
+      pageBuilder: (context, animation, secondaryAnimation) =>  MiniAppScreen(appUrl: appUrl,),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         const begin = Offset(0.0, 1.0);
         const end = Offset.zero;
